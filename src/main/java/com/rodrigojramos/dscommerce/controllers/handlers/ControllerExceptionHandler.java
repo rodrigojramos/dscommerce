@@ -3,6 +3,7 @@ package com.rodrigojramos.dscommerce.controllers.handlers;
 import com.rodrigojramos.dscommerce.dto.CustomError;
 import com.rodrigojramos.dscommerce.dto.ValidationError;
 import com.rodrigojramos.dscommerce.services.exceptions.DatabaseException;
+import com.rodrigojramos.dscommerce.services.exceptions.ForbiddenException;
 import com.rodrigojramos.dscommerce.services.exceptions.ResourceNotFoundException;
 import javax.servlet.http.HttpServletRequest;
 import org.springframework.http.HttpStatus;
@@ -31,12 +32,19 @@ import java.time.Instant;
         }
 
         @ExceptionHandler(MethodArgumentNotValidException.class)
-        public ResponseEntity<CustomError> database(MethodArgumentNotValidException e, HttpServletRequest request) {
+        public ResponseEntity<CustomError> methodArgumentNotValid(MethodArgumentNotValidException e, HttpServletRequest request) {
             HttpStatus status = HttpStatus.UNPROCESSABLE_ENTITY;
             ValidationError err = new ValidationError(Instant.now(), status.value(), "Dados inválidos", request.getRequestURI());
             for(FieldError f : e.getBindingResult().getFieldErrors()) {
                 err.addError(f.getField(), f.getDefaultMessage());
             }
+            return ResponseEntity.status(status).body(err);
+        }
+
+        @ExceptionHandler(ForbiddenException.class)
+        public ResponseEntity<CustomError> forbidden(ForbiddenException e, HttpServletRequest request) {
+            HttpStatus status = HttpStatus.FORBIDDEN;
+            CustomError err = new CustomError(Instant.now(), status.value(), e.getMessage(), request.getRequestURI());
             return ResponseEntity.status(status).body(err);
         }
     }
